@@ -2405,6 +2405,7 @@ for (reg_t i = 0; i < P.VU.vlmax && P.VU.vl != 0; ++i) { \
   INSERT_BITS(rd_tmp, pd, (((reg_t)1 << (sizeof(pd) * 8)) - 1), (i * sizeof(pd) * 8)) \
 
 #define P_LOOP_BASE(BIT) \
+  require_extension('P'); \
   require(BIT == e8 || BIT == e16 || BIT == e32); \
   reg_t rd_tmp = 0; \
   reg_t rs1 = RS1; \
@@ -2413,6 +2414,7 @@ for (reg_t i = 0; i < P.VU.vlmax && P.VU.vl != 0; ++i) { \
   for (int i = len - 1; i >= 0; --i) {
 
 #define P_ONE_LOOP_BASE(BIT) \
+  require_extension('P'); \
   require(BIT == e8 || BIT == e16 || BIT == e32); \
   reg_t rd_tmp = 0; \
   reg_t rs1 = RS1; \
@@ -2420,6 +2422,7 @@ for (reg_t i = 0; i < P.VU.vlmax && P.VU.vl != 0; ++i) { \
   for (int i = len - 1; i >= 0; --i) {
 
 #define P_I_LOOP_BASE(BIT, IMMBIT) \
+  require_extension('P'); \
   require(BIT == e8 || BIT == e16 || BIT == e32); \
   reg_t rd_tmp = 0; \
   reg_t rs1 = RS1; \
@@ -2428,6 +2431,7 @@ for (reg_t i = 0; i < P.VU.vlmax && P.VU.vl != 0; ++i) { \
   for (int i = len - 1; i >= 0; --i) {
 
 #define P_X_LOOP_BASE(BIT, LOWBIT) \
+  require_extension('P'); \
   require(BIT == e8 || BIT == e16 || BIT == e32); \
   reg_t rd_tmp = 0; \
   reg_t rs1 = RS1; \
@@ -2437,6 +2441,7 @@ for (reg_t i = 0; i < P.VU.vlmax && P.VU.vl != 0; ++i) { \
   for (int i = len - 1; i >= 0; --i) {
 
 #define P_MUL_LOOP_BASE(BIT) \
+  require_extension('P'); \
   require(BIT == e8 || BIT == e16 || BIT == e32); \
   reg_t rd_tmp = 0; \
   reg_t rs1 = RS1; \
@@ -2677,6 +2682,7 @@ for (reg_t i = 0; i < P.VU.vlmax && P.VU.vl != 0; ++i) { \
   }
 
 #define P_SUNPKD8(X, Y) \
+  require_extension('P'); \
   reg_t rd_tmp = 0; \
   int16_t pd[4] = { \
     int8_t(P_B(RS1, Y)), \
@@ -2692,6 +2698,7 @@ for (reg_t i = 0; i < P.VU.vlmax && P.VU.vl != 0; ++i) { \
   WRITE_RD(rd_tmp);
 
 #define P_ZUNPKD8(X, Y) \
+  require_extension('P'); \
   reg_t rd_tmp = 0; \
   uint16_t pd[4] = { \
     uint8_t(P_B(RS1, Y)), \
