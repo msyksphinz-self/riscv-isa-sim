@@ -38,6 +38,8 @@ public:
   void set_debug(bool value);
   void set_histogram(bool value);
 
+  void spike_dpi_init() { htif_t::start();}
+
   // Configure logging
   //
   // If enable_log is true, an instruction trace will be generated. If

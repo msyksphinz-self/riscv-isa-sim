@@ -246,6 +246,7 @@ void processor_t::step(size_t n)
        pc = state.pc; \
        break; \
      } else { \
+       state.prev_pc = state.pc; \
        state.pc = pc; \
        instret++; \
      }
