@@ -219,6 +219,9 @@ bool processor_t::slow_path()
 // fetch/decode/execute loop
 void processor_t::step(size_t n)
 {
+  fprintf(stderr, "step is called\n");
+  fprintf(stdout, "step is called\n");
+
   if (!state.debug_mode) {
     if (halt_request == HR_REGULAR) {
       enter_debug_mode(DCSR_CAUSE_DEBUGINT);
@@ -235,7 +238,10 @@ void processor_t::step(size_t n)
     reg_t pc = state.pc;
     mmu_t* _mmu = mmu;
 
+    reg_t prev_pc = state.pc;
+
     #define advance_pc() \
+      state.prev_pc = prev_pc;       \
      if (unlikely(invalid_pc(pc))) { \
        switch (pc) { \
          case PC_SERIALIZE_BEFORE: state.serialized = true; break; \
@@ -246,7 +252,6 @@ void processor_t::step(size_t n)
        pc = state.pc; \
        break; \
      } else { \
-       state.prev_pc = state.pc; \
        state.pc = pc; \
        instret++; \
      }
