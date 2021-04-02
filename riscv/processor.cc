@@ -765,6 +765,7 @@ void processor_t::take_trap(trap_t& t, reg_t epc)
     // Handle the trap in M-mode
     set_virt(false);
     reg_t vector = (state.mtvec & 1) && interrupt ? 4*bit : 0;
+    state.prev_pc = state.pc;
     state.pc = (state.mtvec & ~(reg_t)1) + vector;
     state.mepc = epc;
     state.mcause = t.cause();
