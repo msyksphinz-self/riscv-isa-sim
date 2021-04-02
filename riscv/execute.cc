@@ -219,9 +219,6 @@ bool processor_t::slow_path()
 // fetch/decode/execute loop
 void processor_t::step(size_t n)
 {
-  fprintf(stderr, "step is called\n");
-  fprintf(stdout, "step is called\n");
-
   if (!state.debug_mode) {
     if (halt_request == HR_REGULAR) {
       enter_debug_mode(DCSR_CAUSE_DEBUGINT);
