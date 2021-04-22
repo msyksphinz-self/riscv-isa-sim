@@ -172,6 +172,9 @@ inline void processor_t::update_histogram(reg_t pc)
 // function calls.
 static reg_t execute_insn(processor_t* p, reg_t pc, insn_fetch_t fetch)
 {
+
+  p->get_state()->insn = fetch.insn.bits();
+
   commit_log_reset(p);
   commit_log_stash_privilege(p);
   reg_t npc;

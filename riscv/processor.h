@@ -157,6 +157,8 @@ struct state_t
   static const int num_triggers = 4;
 
   reg_t prev_pc;
+  insn_t insn;
+
   reg_t pc;
   regfile_t<reg_t, NXPR, true> XPR;
   regfile_t<freg_t, NFPR, false> FPR;
