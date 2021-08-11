@@ -1006,7 +1006,7 @@ void processor_t::set_csr(int which, reg_t val)
       break;
     }
     case CSR_MINSTRET:
-    case CSR_MCYCLE:
+      fprintf(stderr, "CSR_MCYCLE written %08llx\n", val);
       if (xlen == 32)
         state.minstret = (state.minstret >> 32 << 32) | (val & 0xffffffffU);
       else
@@ -1017,10 +1017,19 @@ void processor_t::set_csr(int which, reg_t val)
       // Correct for this artifact by decrementing instret here.
       state.minstret--;
       break;
+    case CSR_MCYCLE:
+      fprintf(stderr, "CSR_MCYCLE written %08llx\n", val);
+      if (xlen == 32)
+        state.mcycle = (state.mcycle >> 32 << 32) | (val & 0xffffffffU);
+      else
+        state.mcycle = val;
+      break;
     case CSR_MINSTRETH:
-    case CSR_MCYCLEH:
       state.minstret = (val << 32) | (state.minstret << 32 >> 32);
       state.minstret--; // See comment above.
+      break;
+    case CSR_MCYCLEH:
+      state.mcycle = (val << 32) | (state.mcycle << 32 >> 32);
       break;
     case CSR_SCOUNTEREN:
       state.scounteren = val;
@@ -1475,26 +1484,40 @@ reg_t processor_t::get_csr(int which, insn_t insn, bool write, bool peek)
         break;
       ret((VU.vxsat << VCSR_VXSAT_SHIFT) | (VU.vxrm << VCSR_VXRM_SHIFT));
     case CSR_INSTRET:
-    case CSR_CYCLE:
       if (!ctr_ok)
         goto throw_illegal;
       if (!ctr_v_ok)
         goto throw_virtual;
       ret(state.minstret);
+    case CSR_CYCLE:
+      if (!ctr_ok)
+        goto throw_illegal;
+      if (!ctr_v_ok)
+        goto throw_virtual;
+      ret(state.mcycle);
     case CSR_MINSTRET:
-    case CSR_MCYCLE:
       ret(state.minstret);
+    case CSR_MCYCLE:
+      ret(state.mcycle);
     case CSR_INSTRETH:
-    case CSR_CYCLEH:
       if (!ctr_ok || xlen != 32)
         goto throw_illegal;
       if (!ctr_v_ok)
         goto throw_virtual;
       ret(state.minstret >> 32);
+    case CSR_CYCLEH:
+      if (!ctr_ok || xlen != 32)
+        goto throw_illegal;
+      if (!ctr_v_ok)
+        goto throw_virtual;
+      ret(state.mcycle >> 32);
     case CSR_MINSTRETH:
-    case CSR_MCYCLEH:
       if (xlen == 32)
         ret(state.minstret >> 32);
+      break;
+    case CSR_MCYCLEH:
+      if (xlen == 32)
+        ret(state.mcycle >> 32);
       break;
     case CSR_SCOUNTEREN: ret(state.scounteren);
     case CSR_MCOUNTEREN:
