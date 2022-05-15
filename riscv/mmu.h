@@ -390,6 +390,8 @@ public:
     return target_big_endian? target_endian<T>::to_be(n) : target_endian<T>::to_le(n);
   }
 
+  reg_t translate(reg_t addr, reg_t len, access_type type, uint32_t xlate_flags);
+
 private:
   simif_t* sim;
   processor_t* proc;
@@ -427,7 +429,6 @@ private:
   bool mmio_load(reg_t addr, size_t len, uint8_t* bytes);
   bool mmio_store(reg_t addr, size_t len, const uint8_t* bytes);
   bool mmio_ok(reg_t addr, access_type type);
-  reg_t translate(reg_t addr, reg_t len, access_type type, uint32_t xlate_flags);
 
   // ITLB lookup
   inline tlb_entry_t translate_insn_addr(reg_t addr) {

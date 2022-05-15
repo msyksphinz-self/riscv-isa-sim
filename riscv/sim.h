@@ -59,6 +59,10 @@ public:
   // Callback for processors to let the simulation know they were reset.
   void proc_reset(unsigned id);
 
+  void read_mem(addr_t taddr, size_t len, void* dst) {
+    read_chunk (taddr, len, dst);
+  }
+
 private:
   std::vector<std::pair<reg_t, mem_t*>> mems;
   std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devices;
