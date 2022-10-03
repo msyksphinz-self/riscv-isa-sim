@@ -1006,7 +1006,6 @@ void processor_t::set_csr(int which, reg_t val)
       break;
     }
     case CSR_MINSTRET:
-      fprintf(stderr, "CSR_MCYCLE written %08llx\n", val);
       if (xlen == 32)
         state.minstret = (state.minstret >> 32 << 32) | (val & 0xffffffffU);
       else
@@ -1018,7 +1017,6 @@ void processor_t::set_csr(int which, reg_t val)
       state.minstret--;
       break;
     case CSR_MCYCLE:
-      fprintf(stderr, "CSR_MCYCLE written %08llx\n", val);
       if (xlen == 32)
         state.mcycle = (state.mcycle >> 32 << 32) | (val & 0xffffffffU);
       else
