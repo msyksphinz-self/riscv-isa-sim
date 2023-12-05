@@ -30,7 +30,8 @@ public:
         std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devices,
         const std::vector<std::string>& args, const std::vector<int> hartids,
         const debug_module_config_t &dm_config, const char *log_path,
-        bool dtb_enabled, const char *dtb_file);
+        bool dtb_enabled, const char *dtb_file,
+        const char* sift_filename);
   ~sim_t();
 
   // run the simulation to completion

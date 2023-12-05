@@ -5,12 +5,65 @@
 #include "disasm.h"
 #include <cassert>
 
+#ifdef RISCV_ENABLE_SIFT
+# include "sift_writer.h"
+#endif
+
+uint32_t sift_executed_insn;
+
+
+void record_executed_insn (uint64_t insn)
+{
+  sift_executed_insn = insn;
+}
+
+
+static void log_print_sift_trace(processor_t* p, reg_t pc, insn_t insn)
+{
+#ifdef RISCV_ENABLE_SIFT
+
+  FILE *log_file = p->get_log_file();
+  fprintf(log_file, "log_print_sift_trace called, %08lx\n", pc);
+
+  uint64_t addr = pc;
+  uint64_t size = insn.length();
+  uint64_t num_addresses = p->get_state()->log_addr_valid;
+  uint64_t *addresses = p->get_state()->log_addr;
+  reg_t    *wr_regs = p->get_state()->log_reg_addr;
+  bool     is_branch = p->get_state()->log_is_branch;
+  bool     taken = p->get_state()->log_is_branch_taken;
+
+  auto& reg = p->get_state()->log_reg_write;
+  p->get_state()->log_writer->Instruction(addr, size, num_addresses, addresses, is_branch, taken, 0 /*is_predicate*/, 1 /*executed*/);
+  if (sift_executed_insn == 0x00100013) {  // ADDI
+    p->get_state()->log_writer->Magic (1, 0, 0);   // SIM_ROI_START = 1 at sim_api.h
+  }
+  if (sift_executed_insn == 0x00200013) {  // ADDI
+    p->get_state()->log_writer->Magic (2, 0, 0);   // SIM_ROI_END = 2 at sim_api.h
+  }
+  // if ((sift_executed_insn & MASK_VSETVLI) == MATCH_VSETVLI ||
+  //     (sift_executed_insn & MASK_VSETIVLI) == MATCH_VSETIVLI ||
+  //     (sift_executed_insn & MASK_VSETVL)   == MATCH_VSETVL) {
+  //   auto vl = p->VU.vl;
+  //   auto vtype = p->VU.vtype;
+  //   auto vl_value = vl->read();
+  //   auto vtype_value = vtype->read();
+  //   p->get_state()->log_writer->Magic(5, vl_value, vtype_value);  // SIM_CMD_USER = 5 at sim_api.h
+  // }
+
+  p->get_state()->log_addr_valid = 0;
+  p->get_state()->log_is_branch = false;
+  p->get_state()->log_is_branch_taken = false;
+#endif
+}
+
 #ifdef RISCV_ENABLE_COMMITLOG
 static void commit_log_reset(processor_t* p)
 {
   p->get_state()->log_reg_write.clear();
   p->get_state()->log_mem_read.clear();
   p->get_state()->log_mem_write.clear();
+  p->get_state()->log_addr_valid = 0;
 }
 
 static void commit_log_stash_privilege(processor_t* p)
@@ -184,22 +237,29 @@ static reg_t execute_insn(processor_t* p, reg_t pc, insn_fetch_t fetch)
     if (npc != PC_SERIALIZE_BEFORE) {
 
 #ifdef RISCV_ENABLE_COMMITLOG
+      record_executed_insn (fetch.insn.bits());
       if (p->get_log_commits_enabled()) {
         commit_log_print_insn(p, pc, fetch.insn);
       }
 #endif
 
+      log_print_sift_trace(p, pc, fetch.insn);
+
      }
 #ifdef RISCV_ENABLE_COMMITLOG
   } catch (wait_for_interrupt_t &t) {
+      record_executed_insn (fetch.insn.bits());
       commit_log_print_insn(p, pc, fetch.insn);
+      log_print_sift_trace(p, pc, fetch.insn);
       throw;
   } catch(mem_trap_t& t) {
       //handle segfault in midlle of vector load/store
       if (p->get_log_commits_enabled()) {
         for (auto item : p->get_state()->log_reg_write) {
           if ((item.first & 3) == 3) {
+            record_executed_insn (fetch.insn.bits());
             commit_log_print_insn(p, pc, fetch.insn);
+            log_print_sift_trace(p, pc, fetch.insn);
             break;
           }
         }

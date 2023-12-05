@@ -14,6 +14,9 @@
 #include "debug_rom_defines.h"
 #include "entropy_source.h"
 
+#ifdef RISCV_ENABLE_SIFT
+# include "sift_writer.h"
+#endif
 
 class processor_t;
 class mmu_t;
@@ -152,7 +155,7 @@ struct type_sew_t<64>
 // architectural state of a RISC-V hart
 struct state_t
 {
-  void reset(reg_t max_isa);
+  void reset(reg_t max_isa, mmu_t *mmu);
 
   static const int num_triggers = 4;
 
@@ -237,6 +240,18 @@ struct state_t
   int last_inst_xlen;
   int last_inst_flen;
 #endif
+
+#ifdef RISCV_ENABLE_SIFT
+  const char* sift_filename = nullptr;
+  uint32_t log_id = 0;
+  int log_reset_count = 0;
+  Sift::Writer *log_writer = nullptr;
+  reg_t log_addr[4096];
+  reg_t log_reg_addr[4096];
+  unsigned int log_addr_valid;
+  bool log_is_branch;
+  bool log_is_branch_taken;
+#endif
 };
 
 typedef enum {
@@ -274,7 +289,8 @@ class processor_t : public abstract_device_t
 public:
   processor_t(const char* isa, const char* priv, const char* varch,
               simif_t* sim, uint32_t id, bool halt_on_reset,
-              FILE *log_file);
+              FILE *log_file,
+              const char* sift_filename);
   ~processor_t();
 
   void set_debug(bool value);

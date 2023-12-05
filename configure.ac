@@ -36,8 +36,8 @@ m4_define( proj_version, [?])
 # Setup
 #-------------------------------------------------------------------------
 
-AC_INIT(proj_name,proj_version,proj_maintainer,proj_abbreviation)
-AC_LANG_CPLUSPLUS
+AC_INIT([proj_name],[proj_version],[proj_maintainer],[proj_abbreviation])
+AC_LANG([C++])
 AC_CONFIG_SRCDIR([riscv/common.h])
 AC_CONFIG_AUX_DIR([scripts])
 AC_CANONICAL_BUILD
@@ -75,7 +75,15 @@ MCPPBS_PROG_INSTALL
 # Checks for header files
 #-------------------------------------------------------------------------
 
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 
 #-------------------------------------------------------------------------
 # Checks for type

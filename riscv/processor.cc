@@ -18,12 +18,17 @@
 #include <string>
 #include <algorithm>
 
+#ifdef RISCV_ENABLE_SIFT
+# include "sift_writer.h"
+#endif
+
 #undef STATE
 #define STATE state
 
 processor_t::processor_t(const char* isa, const char* priv, const char* varch,
                          simif_t* sim, uint32_t id, bool halt_on_reset,
-                         FILE* log_file)
+                         FILE* log_file,
+                         const char* sift_filename)
   : debug(false), halt_request(HR_NONE), sim(sim), id(id), xlen(0),
   histogram_enabled(false), log_commits_enabled(false),
   log_file(log_file), halt_on_reset(halt_on_reset),
@@ -51,6 +56,7 @@ processor_t::processor_t(const char* isa, const char* priv, const char* varch,
   else if (max_xlen == 64)
     set_mmu_capability(IMPL_MMU_SV48);
 
+  state.sift_filename = sift_filename;
   reset();
 }
 
@@ -62,6 +68,14 @@ processor_t::~processor_t()
     fprintf(stderr, "PC Histogram size:%zu\n", pc_histogram.size());
     for (auto it : pc_histogram)
       fprintf(stderr, "%0" PRIx64 " %" PRIu64 "\n", it.first, it.second);
+  }
+#endif
+
+#ifdef RISCV_ENABLE_SIFT
+  if (state.log_writer)
+  {
+    delete state.log_writer;
+    state.log_writer = nullptr;
   }
 #endif
 
@@ -296,7 +310,18 @@ void processor_t::parse_isa_string(const char* str)
     bad_isa_string(str, "'Q' extension requires 'D'");
 }
 
-void state_t::reset(reg_t max_isa)
+
+extern uint32_t sift_executed_insn; // defined in execute.cc
+
+void getCode(uint8_t *dst, const uint8_t *src, uint32_t size, void* _mmu)
+{
+  for (uint32_t i = 0 ; i < size ; ++i) {
+    dst[i] = (sift_executed_insn >> (i * 8)) & 0xff;
+  }
+}
+
+
+void state_t::reset(reg_t max_isa, mmu_t *mmu)
 {
   pc = DEFAULT_RSTVEC;
   XPR.reset();
@@ -369,7 +394,24 @@ void state_t::reset(reg_t max_isa)
   last_inst_priv = 0;
   last_inst_xlen = 0;
   last_inst_flen = 0;
+  log_addr_valid = 0;
+  log_is_branch = false;
+  log_is_branch_taken = false;
 #endif
+
+#ifdef RISCV_ENABLE_SIFT
+  log_writer = new Sift::Writer(sift_filename, // filename
+                                nullptr, // getCodeFunc
+                                true, // useCompression
+                                "response", // response_filename
+                                0, // id
+                                false, // arch32
+                                true, // require_icache_per_insn
+                                false, // send_va2pa_mapping
+                                getCode, // getCodeFunc2
+                                reinterpret_cast<void*>(mmu));
+#endif // RISCV_ENABLE_SIFT
+
 }
 
 void processor_t::vectorUnit_t::reset(){
@@ -451,7 +493,7 @@ void processor_t::enable_log_commits()
 
 void processor_t::reset()
 {
-  state.reset(max_isa);
+  state.reset(max_isa, mmu);
 #ifdef RISCV_ENABLE_DUAL_ENDIAN
   if (mmu->is_target_big_endian())
     state.mstatus |= MSTATUS_UBE | MSTATUS_SBE | MSTATUS_MBE;

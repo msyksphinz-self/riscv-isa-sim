@@ -93,9 +93,22 @@ public:
 #define RISCV_XLATE_VIRT (1U << 0)
 #define RISCV_XLATE_VIRT_MXR (1U << 1)
 
+#ifdef RISCV_ENABLE_SIFT
+# define LOG_ADDR(addr, reg_addr) ({   \
+      if (proc && proc->get_state()) { \
+        proc->get_state()->log_addr[proc->get_state()->log_addr_valid] = addr; \
+        proc->get_state()->log_reg_addr[proc->get_state()->log_addr_valid] = reg_addr; \
+        proc->get_state()->log_addr_valid++; \
+      } \
+    })
+#else
+# define LOG_ADDR(addr) do {} while (false)
+#endif
+
   // template for functions that load an aligned value from memory
   #define load_func(type, prefix, xlate_flags) \
     inline type##_t prefix##_##type(reg_t addr, bool require_alignment = false) { \
+      LOG_ADDR(addr, 0);                                                \
       if ((xlate_flags) != 0) \
         flush_tlb(); \
       if (unlikely(addr & (sizeof(type##_t)-1))) { \
@@ -162,6 +175,7 @@ public:
   // template for functions that store an aligned value to memory
   #define store_func(type, prefix, xlate_flags) \
     void prefix##_##type(reg_t addr, type##_t val) { \
+      LOG_ADDR(addr, 0);                             \
       if ((xlate_flags) != 0) \
         flush_tlb(); \
       if (unlikely(addr & (sizeof(type##_t)-1))) \
