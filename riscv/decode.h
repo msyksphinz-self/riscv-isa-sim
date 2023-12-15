@@ -200,6 +200,15 @@ private:
 # define WRITE_VSTATUS STATE.log_reg_write[3] = {0, 0};
 #endif
 
+#ifdef RISCV_ENABLE_SIFT
+# define LOG_BRANCH(taken) ({ \
+    STATE.log_is_branch = true; \
+    STATE.log_is_branch_taken = (taken); \
+  })
+#else
+# define LOG_BRANCH(taken) do {} while(false)
+#endif
+
 // RVC macros
 #define WRITE_RVC_RS1S(value) WRITE_REG(insn.rvc_rs1s(), value)
 #define WRITE_RVC_RS2S(value) WRITE_REG(insn.rvc_rs2s(), value)
