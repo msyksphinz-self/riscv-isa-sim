@@ -340,6 +340,7 @@ void state_t::reset(reg_t max_isa)
   vscause = 0;
   vstval = 0;
   vsatp = 0;
+  vscratch = 0;
 
   dpc = 0;
   dscratch0 = 0;
@@ -380,7 +381,8 @@ void processor_t::vectorUnit_t::reset(){
   memset(reg_file, 0, NVPR * vlenb);
 
   vtype = 0;
-  set_vl(0, 0, 0, -1); // default to illegal configuration
+  // set_vl(0, 0, 0, -1); // default to illegal configuration
+  set_vl(0, 0, 0, 0); // default to illegal configuration
 }
 
 reg_t processor_t::vectorUnit_t::set_vl(int rd, int rs1, reg_t reqVL, reg_t newType){
@@ -717,6 +719,26 @@ void processor_t::take_trap(trap_t& t, reg_t epc)
   reg_t bit = t.cause();
   bool curr_virt = state.v;
   bool interrupt = (bit & ((reg_t)1 << (max_xlen-1))) != 0;
+
+  if (t.cause() == CAUSE_LMUL_CHANGE) {
+    fprintf(log_file, "detect lmul change\n");
+    state.pc = 0x2000;
+    state.mepc = epc;
+    state.vscratch = t.get_tval();
+
+    reg_t s = state.mstatus;
+    s = set_field(s, MSTATUS_MPIE, get_field(s, MSTATUS_MIE));
+    s = set_field(s, MSTATUS_MPP, state.prv);
+    s = set_field(s, MSTATUS_MIE, 0);
+    s = set_field(s, MSTATUS_MPV, curr_virt);
+    s = set_field(s, MSTATUS_GVA, t.has_gva());
+    set_csr(CSR_MSTATUS, s);
+    set_privilege(PRV_M);
+
+    return;
+  }
+
+
   if (interrupt) {
     vsdeleg = (curr_virt && state.prv <= PRV_S) ? (state.mideleg & state.hideleg) : 0;
     hsdeleg = (state.prv <= PRV_S) ? state.mideleg : 0;
@@ -1306,6 +1328,10 @@ void processor_t::set_csr(int which, reg_t val)
       dirty_vs_state;
       VU.vxrm = val & 0x3ul;
       break;
+    case CSR_VSCRATCH:
+      dirty_vs_state;
+      state.vscratch = val;
+      break;
   }
 
 #if defined(RISCV_ENABLE_COMMITLOG)
@@ -1753,6 +1779,11 @@ reg_t processor_t::get_csr(int which, insn_t insn, bool write, bool peek)
       if (!supports_extension('V'))
         break;
       ret(VU.vlenb);
+    case CSR_VSCRATCH:
+      require_vector_vs;
+      if (!supports_extension('V'))
+        break;
+      ret(state.vscratch);
   }
 
 #undef ret

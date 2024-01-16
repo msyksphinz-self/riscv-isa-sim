@@ -204,6 +204,7 @@ struct state_t
   reg_t vscause;
   reg_t vstval;
   reg_t vsatp;
+  reg_t vscratch;
 
   reg_t dpc;
   reg_t dscratch0, dscratch1;
@@ -500,6 +501,7 @@ public:
       reg_t ELEN, VLEN;
       bool vill;
       bool vstart_alu;
+      bool phyreg_sorting;
 
       // vector element for varies SEW
       template<class T>
@@ -529,6 +531,8 @@ public:
       void reset();
 
       vectorUnit_t(){
+        vflmul = 1.0;
+        phyreg_sorting = false;
         reg_file = 0;
       }
 
