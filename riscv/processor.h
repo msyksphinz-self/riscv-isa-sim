@@ -76,6 +76,9 @@ struct state_t
 {
   void reset(processor_t* const proc, reg_t max_isa);
 
+  reg_t prev_pc;
+  insn_t insn;
+
   reg_t pc;
   regfile_t<reg_t, NXPR, true> XPR;
   regfile_t<freg_t, NFPR, false> FPR;

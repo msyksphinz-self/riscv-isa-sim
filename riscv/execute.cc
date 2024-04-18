@@ -229,7 +229,10 @@ void processor_t::step(size_t n)
     state.prv_changed = false;
     state.v_changed = false;
 
+    reg_t prev_pc = state.pc;
+
     #define advance_pc() \
+      state.prev_pc = prev_pc;        \
       if (unlikely(invalid_pc(pc))) { \
         switch (pc) { \
           case PC_SERIALIZE_BEFORE: state.serialized = true; break; \

@@ -41,6 +41,8 @@ public:
   void set_histogram(bool value);
   void add_device(reg_t addr, std::shared_ptr<abstract_device_t> dev);
 
+  void spike_dpi_init() { htif_t::start();}
+
   // Configure logging
   //
   // If enable_log is true, an instruction trace will be generated. If
