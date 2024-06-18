@@ -70,6 +70,7 @@ private:
   std::map<reg_t, reg_t> alloc_cache;
   std::vector<std::pair<reg_t, reg_t >> addr_tbl;
 
+public:
   mem_access_info_t generate_access_info(reg_t addr, access_type type, xlate_flags_t xlate_flags) {
     if (!proc)
       return {addr, 0, false, {}, type};
@@ -399,8 +400,11 @@ private:
     check_triggers(operation, address, virt, address, data);
   }
   void check_triggers(triggers::operation_t operation, reg_t address, bool virt, reg_t tval, std::optional<reg_t> data);
+
+public:
   reg_t translate(mem_access_info_t access_info, reg_t len);
 
+private:
   reg_t pte_load(reg_t pte_paddr, reg_t addr, bool virt, access_type trap_type, size_t ptesize) {
     if (ptesize == 4)
       return pte_load<uint32_t>(pte_paddr, addr, virt, trap_type);
